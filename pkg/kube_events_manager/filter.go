@@ -18,7 +18,7 @@ import (
 // ApplyFilter filters object json representation with jq expression, calculate checksum
 // over result and return ObjectAndFilterResult. If jqFilter is empty, no filter
 // is required and checksum is calculated over full json representation of the object.
-func ApplyFilter(jqFilter string, filterFn func(obj *unstructured.Unstructured) (result string, err error), obj *unstructured.Unstructured) (*ObjectAndFilterResult, error) {
+func ApplyFilter(jqFilter string, filterFn func(obj interface{}) (result interface{}, err error), obj *unstructured.Unstructured) (*ObjectAndFilterResult, error) {
 	defer trace.StartRegion(context.Background(), "ApplyJqFilter").End()
 
 	res := &ObjectAndFilterResult{
@@ -35,14 +35,18 @@ func ApplyFilter(jqFilter string, filterFn func(obj *unstructured.Unstructured) 
 
 	// If filterFn is passed, run it and return result.
 	if filterFn != nil {
-		var err error
-		var filtered string
-		filtered, err = filterFn(obj)
+		filteredObj, err := filterFn(obj)
 		if err != nil {
 			return nil, fmt.Errorf("filterFn: %v", err)
 		}
-		res.FilterResult = filtered
-		res.Metadata.Checksum = utils_checksum.CalculateChecksum(filtered)
+
+		data, err := json.Marshal(filteredObj)
+		if err != nil {
+			return nil, err
+		}
+
+		res.FilterResult = data
+		res.Metadata.Checksum = utils_checksum.CalculateChecksum(string(data))
 		return res, nil
 	}
 
@@ -55,7 +59,7 @@ func ApplyFilter(jqFilter string, filterFn func(obj *unstructured.Unstructured) 
 		if err != nil {
 			return nil, fmt.Errorf("jqFilter: %v", err)
 		}
-		res.FilterResult = filtered
+		res.FilterResult = []byte(filtered)
 		res.Metadata.Checksum = utils_checksum.CalculateChecksum(filtered)
 	}
 	return res, nil

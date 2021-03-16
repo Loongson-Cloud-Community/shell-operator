@@ -115,7 +115,7 @@ func Test_ConvertBindingContextList_v1(t *testing.T) {
 							"kind": "Pod",
 						},
 					},
-					FilterResult: "asd",
+					FilterResult: []byte("asd"),
 				}
 				obj.Metadata.JqFilter = ""
 				bc.Objects = append(bc.Objects, obj)
@@ -131,7 +131,7 @@ func Test_ConvertBindingContextList_v1(t *testing.T) {
 							"kind": "Deployment",
 						},
 					},
-					FilterResult: "{\"labels\":{\"label-name\":\"label-value\"}}",
+					FilterResult: []byte("{\"labels\":{\"label-name\":\"label-value\"}}"),
 				}
 				obj.Metadata.JqFilter = ".metadata.labels"
 				bc.Objects = append(bc.Objects, obj)
@@ -146,7 +146,7 @@ func Test_ConvertBindingContextList_v1(t *testing.T) {
 							},
 							"kind": "Deployment",
 						}},
-					FilterResult: `""`,
+					FilterResult: []byte(`""`),
 				}
 				obj.Metadata.JqFilter = ".metadata.labels"
 				bc.Objects = append(bc.Objects, obj)
@@ -199,7 +199,7 @@ func Test_ConvertBindingContextList_v1(t *testing.T) {
 							"kind": "Pod",
 						},
 					},
-					FilterResult: "asd",
+					FilterResult: []byte("asd"),
 				}
 				bc.Objects = append(bc.Objects, obj)
 				bc.Snapshots["monitor_pods"] = append(bc.Snapshots["monitor_pods"], obj)
@@ -223,7 +223,7 @@ func Test_ConvertBindingContextList_v1(t *testing.T) {
 							"kind": "Pod",
 						},
 					},
-					FilterResult: "asd",
+					FilterResult: []byte("asd"),
 				}
 				bc.Objects = append(bc.Objects, obj)
 
@@ -280,7 +280,7 @@ func Test_ConvertBindingContextList_v1(t *testing.T) {
 							"kind": "Pod",
 						},
 					},
-					FilterResult: "asd",
+					FilterResult: []byte("asd"),
 				}
 				bc.Objects = append(bc.Objects, obj)
 				bc.Snapshots["monitor_config_maps"] = append(bc.Snapshots["monitor_config_maps"], obj)
@@ -303,7 +303,7 @@ func Test_ConvertBindingContextList_v1(t *testing.T) {
 							"kind": "Pod",
 						},
 					},
-					FilterResult: "asd",
+					FilterResult: []byte("asd"),
 				}
 				bc.Objects = append(bc.Objects, obj)
 

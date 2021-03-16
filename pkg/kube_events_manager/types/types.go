@@ -42,7 +42,7 @@ type ObjectAndFilterResult struct {
 		RemoveObject bool
 	}
 	Object       *unstructured.Unstructured // here is a pointer because of MarshalJSON receiver
-	FilterResult string
+	FilterResult []byte
 	ObjectBytes  int64 // length of Object
 }
 
@@ -58,12 +58,12 @@ func (o ObjectAndFilterResult) Map() map[string]interface{} {
 	}
 	// Add filterResult field only if it was requested
 	inJson := o.FilterResult
-	if inJson == "" {
+	if len(inJson) == 0 {
 		m["filterResult"] = nil
 		return m
 	}
 	var res interface{}
-	err := json.Unmarshal([]byte(inJson), &res)
+	err := json.Unmarshal(inJson, &res)
 	if err != nil {
 		log.Errorf("Possible bug!!! Cannot unmarshal jq filter '%s' result: %s", o.Metadata.JqFilter, err)
 		m["filterResult"] = nil

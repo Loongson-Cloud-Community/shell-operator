@@ -11,7 +11,7 @@ import (
 
 func newObj(kind, ns, name, filterResult string) *ObjectAndFilterResult {
 	return &ObjectAndFilterResult{
-		FilterResult: filterResult,
+		FilterResult: []byte(filterResult),
 		Object: &unstructured.Unstructured{
 			Object: map[string]interface{}{
 				"metadata": map[string]interface{}{
