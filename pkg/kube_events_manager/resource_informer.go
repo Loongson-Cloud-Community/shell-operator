@@ -30,7 +30,7 @@ type ResourceInformer interface {
 	WithKubeEventCb(eventCb func(KubeEvent))
 	CreateSharedInformer() error
 	GetExistedObjects() []ObjectAndFilterResult
-	CachedObjectsBytes() int64
+	CachedObjectsBytes() int
 	Start()
 	Stop()
 	PauseHandleEvents()
@@ -169,7 +169,7 @@ func (ei *resourceInformer) GetExistedObjects() []ObjectAndFilterResult {
 	return res
 }
 
-func (ei *resourceInformer) CachedObjectsBytes() int64 {
+func (ei *resourceInformer) CachedObjectsBytes() int {
 	ei.cacheLock.RLock()
 	defer ei.cacheLock.RUnlock()
 	return ObjectAndFilterResults(ei.CachedObjects).Bytes()

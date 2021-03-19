@@ -31,7 +31,7 @@ func ApplyFilter(jqFilter string, filterFn func(obj interface{}) (result interfa
 	if err != nil {
 		return nil, err
 	}
-	res.ObjectBytes = int64(len(data))
+	res.ObjectSize = len(data)
 
 	// If filterFn is passed, run it and return result.
 	if filterFn != nil {
@@ -40,13 +40,15 @@ func ApplyFilter(jqFilter string, filterFn func(obj interface{}) (result interfa
 			return nil, fmt.Errorf("filterFn: %v", err)
 		}
 
-		data, err := json.Marshal(filteredObj)
+		filteredBytes, err := json.Marshal(filteredObj)
 		if err != nil {
 			return nil, err
 		}
 
-		res.FilterResult = data
-		res.Metadata.Checksum = utils_checksum.CalculateChecksum(string(data))
+		res.FilterResult = filteredObj
+		res.FilterResultSize = len(filteredBytes)
+		res.Metadata.Checksum = utils_checksum.CalculateChecksum(string(filteredBytes))
+
 		return res, nil
 	}
 
@@ -59,8 +61,16 @@ func ApplyFilter(jqFilter string, filterFn func(obj interface{}) (result interfa
 		if err != nil {
 			return nil, fmt.Errorf("jqFilter: %v", err)
 		}
+
+		filteredBytes, err := json.Marshal(filtered)
+		if err != nil {
+			return nil, err
+		}
+
 		res.FilterResult = []byte(filtered)
+		res.FilterResultSize = len(filteredBytes)
 		res.Metadata.Checksum = utils_checksum.CalculateChecksum(filtered)
 	}
+
 	return res, nil
 }

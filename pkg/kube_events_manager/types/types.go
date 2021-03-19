@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"strings"
 
-	log "github.com/sirupsen/logrus"
-
+	"github.com/JohnCGriffin/overflow"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"modernc.org/mathutil"
 )
 
 type WatchEventType string
@@ -41,9 +41,10 @@ type ObjectAndFilterResult struct {
 		ResourceId   string // Used for sorting
 		RemoveObject bool
 	}
-	Object       *unstructured.Unstructured // here is a pointer because of MarshalJSON receiver
-	FilterResult []byte
-	ObjectBytes  int64 // length of Object
+	Object           *unstructured.Unstructured // here is a pointer because of MarshalJSON receiver
+	FilterResult     interface{}
+	FilterResultSize int
+	ObjectSize       int // length of Object
 }
 
 func (o ObjectAndFilterResult) Map() map[string]interface{} {
@@ -57,19 +58,12 @@ func (o ObjectAndFilterResult) Map() map[string]interface{} {
 		return m
 	}
 	// Add filterResult field only if it was requested
-	inJson := o.FilterResult
-	if len(inJson) == 0 {
+	if o.FilterResult == nil {
 		m["filterResult"] = nil
 		return m
 	}
-	var res interface{}
-	err := json.Unmarshal(inJson, &res)
-	if err != nil {
-		log.Errorf("Possible bug!!! Cannot unmarshal jq filter '%s' result: %s", o.Metadata.JqFilter, err)
-		m["filterResult"] = nil
-		return m
-	}
-	m["filterResult"] = res
+
+	m["filterResult"] = o.FilterResult
 
 	return m
 }
@@ -80,17 +74,29 @@ func (o ObjectAndFilterResult) MarshalJSON() ([]byte, error) {
 
 func (o *ObjectAndFilterResult) RemoveFullObject() {
 	o.Object = nil
-	o.ObjectBytes = 0
+	o.ObjectSize = 0
 	o.Metadata.RemoveObject = true
 }
 
 type ObjectAndFilterResults map[string]*ObjectAndFilterResult
 
-func (a ObjectAndFilterResults) Bytes() (size int64) {
+func (a ObjectAndFilterResults) Bytes() (size int) {
 	for _, o := range a {
-		size += int64(len(o.FilterResult))
-		size += o.ObjectBytes
+		if newSize, overflowed := overflow.Add(size, o.FilterResultSize); overflowed {
+			size = mathutil.MaxInt
+			return
+		} else {
+			size += newSize
+		}
+
+		if newSize, overflowed := overflow.Add(size, o.ObjectSize); overflowed {
+			size = mathutil.MaxInt
+			return
+		} else {
+			size += newSize
+		}
 	}
+
 	return
 }
 
