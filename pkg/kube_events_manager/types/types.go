@@ -3,12 +3,12 @@ package types
 import (
 	"encoding/json"
 	"fmt"
+	"math"
 	"strings"
 
 	"github.com/JohnCGriffin/overflow"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"modernc.org/mathutil"
 )
 
 type WatchEventType string
@@ -41,10 +41,11 @@ type ObjectAndFilterResult struct {
 		ResourceId   string // Used for sorting
 		RemoveObject bool
 	}
-	Object           *unstructured.Unstructured // here is a pointer because of MarshalJSON receiver
-	FilterResult     interface{}
+	Object       *unstructured.Unstructured // here is a pointer because of MarshalJSON receiver
+	FilterResult interface{}
+	// since len() return int, there is no reason to use larger int
 	FilterResultSize int
-	ObjectSize       int // length of Object
+	ObjectSize       int
 }
 
 func (o ObjectAndFilterResult) Map() map[string]interface{} {
@@ -80,17 +81,17 @@ func (o *ObjectAndFilterResult) RemoveFullObject() {
 
 type ObjectAndFilterResults map[string]*ObjectAndFilterResult
 
-func (a ObjectAndFilterResults) Bytes() (size int) {
+func (a ObjectAndFilterResults) Bytes() (size int64) {
 	for _, o := range a {
-		if newSize, overflowed := overflow.Add(size, o.FilterResultSize); overflowed {
-			size = mathutil.MaxInt
+		if newSize, overflowed := overflow.Add64(size, int64(o.FilterResultSize)); overflowed {
+			size = math.MaxInt64
 			return
 		} else {
 			size += newSize
 		}
 
-		if newSize, overflowed := overflow.Add(size, o.ObjectSize); overflowed {
-			size = mathutil.MaxInt
+		if newSize, overflowed := overflow.Add64(size, int64(o.ObjectSize)); overflowed {
+			size = math.MaxInt64
 			return
 		} else {
 			size += newSize
